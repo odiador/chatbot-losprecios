@@ -1,9 +1,13 @@
 import json
 import requests
 from mistralai import Mistral
+import os
+from dotenv import load_dotenv
 
-CLAVE_API_LOSPRECIOS = ""
-MISTRAL_API_KEY = ""
+load_dotenv()
+
+CLAVE_API_LOSPRECIOS = os.getenv("CLAVE_API_LOSPRECIOS")
+MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 MODEL = "mistral-large-latest"
 
 client = Mistral(api_key=MISTRAL_API_KEY)
@@ -61,7 +65,7 @@ def mensaje_sistema():
 
 def formatear_resultado(data: dict) -> str:
     if data.get("Resultado") != "Ok" or not data.get("Datos", {}).get("Ítems"):
-        return "No se encontraron resultados para tu búsqueda."
+        return "❌ No se encontraron resultados para tu búsqueda."
 
     respuesta = ""
     for item in data["Datos"]["Ítems"]:
@@ -71,7 +75,7 @@ def formatear_resultado(data: dict) -> str:
                 precio = f"${int(tienda['Precio']):,}".replace(",", ".")
                 respuesta += f"   🛒 {tienda['Tienda']} ➜ {precio} COP [{tienda['Fecha']}]\n"
         else:
-            respuesta += "No hay precios disponibles para este ítem en el municipio seleccionado.\n"
+            respuesta += "   ⚠️ No hay precios disponibles para este ítem en el municipio seleccionado.\n"
     return respuesta
 
 def chat():
@@ -81,7 +85,7 @@ def chat():
     while True:
         user_input = input("Tú: ")
         if user_input.lower() == "salir":
-            print("Chat finalizado.")
+            print("👋 Chat finalizado.")
             break
 
         messages.append({
@@ -98,6 +102,7 @@ def chat():
         choice = response.choices[0]
         tool_calls = getattr(choice.message, "tool_calls", None)
 
+        # 👇 Agrega primero el mensaje del asistente con la función que quiere ejecutar
         messages.append({
             "role": "assistant",
             "content": choice.message.content or "",
